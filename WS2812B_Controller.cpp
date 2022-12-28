@@ -1,8 +1,16 @@
 #include"WS2812B_Controller.h"
 
-WS2812B_Controller::WS2812B_Controller() {}
+WS2812B_Controller::WS2812B_Controller(uint8_t pinnumber) {
+    WS2812B_Controller::set_pin(pinnumber);
+}
 
 WS2812B_Controller::~WS2812B_Controller() {}
+
+void WS2812B_Controller::set_pin(uint8_t pinnumber) {    
+    pinMode(WS2812B_Controller::curr_pin_out, INPUT); // INPUT is equivalent to 0x01 | 0000 0001b
+    pinMode(pinnumber, OUTPUT); // OUTPUT is equivalent to 0x03 | 0000 0011b
+    WS2812B_Controller::curr_pin_out = pinnumber;
+}
 
 void WS2812B_Controller::start_light() {
 
@@ -20,7 +28,6 @@ void WS2812B_Controller::start_light() {
 #define T1LT1H (Signal_Nibbles::big_endian = Signal_Nibbles::big_endian | 0x2), (Signal_Nibbles::little_endian = Signal_Nibbles::little_endian << 1)
 #define T1LT0H                                                                  (Signal_Nibbles::little_endian = Signal_Nibbles::little_endian >> 1)
 
-#ifdef PIN
     while(led_iterator != LED_strip.end()) {
         //execution with port etc.
         /*
@@ -28,10 +35,34 @@ void WS2812B_Controller::start_light() {
         * send bit with time code to correct pin on esp32
         * during wait (from 20 to 56 NOP) catch next bit and change big and little endian
         * same procedure with red and blue
-        * loop starts again
+        * loop starts again with led_iterator++
         */
+       // [31 ... 0] output field; address of GPIO 0-31 set and clear registers
+#define GPIO_OUT_W1TS_REG 0x3FF44008
+#define GPIO_OUT_W1TC_REG 0x3FF4400C 
+       // [31 ... 8] unused; [7 ... 0] output field; address of GPIO 32-39 set and clear registers
+#define GPIO_OUT1_W1TS_REG 0x3FF44014
+#define GPIO_OUT1_W1TC_REG 0x3FF44018
+        /**
+         * Write HIGH to GPIO 15 -> out GPIO_OUT_W1TS_REG 0x00004000 (0000 0000 0000 0000 0100 0000 0000 0000)
+         * 
+         * Corresponding Bit in GPIO_OUT_REG will be changed:
+         *     0x88108081 (1000 1000 0001 0000 1000 0000 1000 0001) -> 0x8810C081 (1000 1000 0001 0000 1100 0000 1000 0001)
+         *     [GPIO-PIN set: 0, 7, 16, 21, 27, 31]                    [GPIO-PIN set: 0, 7, 15, 16, 21, 27, 31]
+         * 
+         * ----------------------------------------------
+         * 
+         * Write LOW to GPIO 15 -> out GPIO_OUT_W1TC_REG 0x00004000 (0000 0000 0000 0000 0100 0000 0000 0000)
+         * 
+         * Corresponding Bit in GPIO_OUT_REG will be changed:
+         *     0x88108081 (1000 1000 0001 0000 1100 0000 1000 0001) -> 0x8810C081 (1000 1000 0001 0000 1000 0000 1000 0001)
+         *     [GPIO-PIN set: 0, 7, 15, 16, 21, 27, 31]                    [GPIO-PIN set: 0, 7, 16, 21, 27, 31]
+        */
+       _asm {
+        //
+       }
     }
-#endif
+
 }
 
 void WS2812B_Controller::init_strip(std::array<RGB,WS2812B_LENGTH> temp) {
