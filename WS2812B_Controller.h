@@ -21,7 +21,12 @@ class WS2812B_Controller {
         void start_light();
         void set_pin(uint8_t pinnumber);
 #define WS2812B_LENGTH 60
-        void init_strip(std::array<RGB,WS2812B_LENGTH> temp);
+        void init_strip(int length);
+        void set_strip_LED(RGB light);
+        void shamble_LED_bits();
+        void set_strip(RGB light);
+        void set_strip_diff(std::array<WS2812B_Controller::RGB,WS2812B_LENGTH> strip);
+
 
     private:
         static struct Signal_Nibbles {

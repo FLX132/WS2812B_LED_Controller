@@ -4,7 +4,9 @@ WS2812B_Controller::WS2812B_Controller(uint8_t pinnumber) {
     WS2812B_Controller::set_pin(pinnumber);
 }
 
-WS2812B_Controller::~WS2812B_Controller() {}
+WS2812B_Controller::~WS2812B_Controller() {
+    
+}
 
 void WS2812B_Controller::set_pin(uint8_t pinnumber) {   
     if(WS2812B_Controller::pin_to_GPIO_index.find(pinnumber) != WS2812B_Controller::pin_to_GPIO_index.end()) { // Pin needs to be available for I/O operations to LED
@@ -24,13 +26,32 @@ void WS2812B_Controller::set_pin(uint8_t pinnumber) {
 
 void WS2812B_Controller::start_light() {
 
-    auto led_iterator = LED_strip.begin();
+    auto led_iterator = LED_strip.begin(); // start by first LED and iterate through the array
+
+    /**
+     * Init first Signal:
+     *   T0H -> 0x14 -> T0L -> 0x38
+     *   T1H -> 0x34 -> T1L -> 0x18
+    */
     Signal_Nibbles::big_endian = 0x1;
     Signal_Nibbles::little_endian = 0x4;
     if(led_iterator->g & 0x80) {
         Signal_Nibbles::big_endian+=0x2;
     }
-    
+
+    /**
+     * Preprocessor uses state-machine like transition:
+     *   - T0H -> T0L
+     *   - T0L -> T0H
+     *   - T0L -> T1H
+     *   - T1H -> T1L
+     *   - T1l -> T1H
+     *   - T1L -> T0H
+     * 
+     *  example for following explanation: T1L: 1. nibble -> 0x1 2. nibble -> 0x8 >> combined: 0x18 = 24 (minimum strokes to ensure correct signal)
+     *  >--------------------------------------------------------------------<  >------------------------------------------------------------------>
+     *                           sets first nibble                                                           sets second nibble
+    */
 #define T0HT0L (Signal_Nibbles::big_endian = Signal_Nibbles::big_endian | 0x2), (Signal_Nibbles::little_endian = Signal_Nibbles::little_endian << 1)
 #define T0LT0H (Signal_Nibbles::big_endian = Signal_Nibbles::big_endian & 0x1), (Signal_Nibbles::little_endian = Signal_Nibbles::little_endian >> 1)
 #define T0LT1H                                                                  (Signal_Nibbles::little_endian = Signal_Nibbles::little_endian << 1)
@@ -38,15 +59,6 @@ void WS2812B_Controller::start_light() {
 #define T1LT1H (Signal_Nibbles::big_endian = Signal_Nibbles::big_endian | 0x2), (Signal_Nibbles::little_endian = Signal_Nibbles::little_endian << 1)
 #define T1LT0H                                                                  (Signal_Nibbles::little_endian = Signal_Nibbles::little_endian >> 1)
 
-    while(led_iterator != LED_strip.end()) {
-        //execution with port etc.
-        /*
-        * 8 times read bit, save, shift left by 1
-        * send bit with time code to correct pin on esp32
-        * during wait (from 20 to 56 NOP) catch next bit and change big and little endian
-        * same procedure with red and blue
-        * loop starts again with led_iterator++
-        */
        // [31 ... 0] output field; address of GPIO 0-31 set and clear registers
 #define GPIO_OUT_W1TS_REG 0x3FF44008
 #define GPIO_OUT_W1TC_REG 0x3FF4400C 
@@ -68,36 +80,85 @@ void WS2812B_Controller::start_light() {
          *     0x88108081 (1000 1000 0001 0001 1000 0000 1000 0001) -> 0x8810C081 (1000 1000 0001 0000 1000 0000 1000 0001)
          *     [GPIO-PIN set: 0, 4, 12, 15, 16, 24, 31]                    [GPIO-PIN set: 0, 4, 12, 16, 24, 31]
         */
-       _asm {
+
+    uint32_t output_reg_addr_set = ((6 < WS2812B_Controller::curr_pin_out < 9) ? GPIO_OUT1_W1TS_REG : GPIO_OUT_W1TS_REG);
+    uint32_t output_reg_addr_clear = ((6 < WS2812B_Controller::curr_pin_out < 9) ? GPIO_OUT1_W1TC_REG : GPIO_OUT_W1TC_REG);
+    uint32_t pin_hex = WS2812B_Controller::pin_to_GPIO_index.find(WS2812B_Controller::curr_pin_out);
+
+    asm(
+        // load pin_hex to ax register(s)
+        // load 0x8000_0000 to ax register(s)
+    );
+    while(led_iterator != LED_strip.end()) {
+        //execution with port etc.
+        /*
+        * 8 times read bit, save, shift left by 1
+        * send bit with time code to correct pin on esp32
+        * during wait (from 20 to 56 NOP) catch next bit and change big and little endian
+        * same procedure with red and blue
+        * loop starts again with led_iterator++
+        */
+       asm volatile (
+        // loop 8 times
         //
-       }
+        // load from iterator address to ax
+        //
+        // load green byte to ax
+        // AND ax, 0x8000_0000
+        // load from ax registers to GPIO high register
+        // branch equal to 0x8000_0000 (+Jump)
+        //    | NOPx?
+        //    | jump back
+        // NOPx?
+        // load from ax registers to GPIO low register
+        // branch equal to zero (+Jump)
+        //    | NOPx?
+        //    | jump back
+        // NOPx?
+        //
+        // load red byte to ax
+        // AND ax, 0x8000_0000
+        // load from ax registers to GPIO high register
+        // branch equal to 0x8000_0000 (+Jump)
+        //    | NOPx?
+        //    | jump back
+        // NOPx?
+        // load from ax registers to GPIO low register
+        // branch equal to zero (+Jump)
+        //    | NOPx?
+        //    | jump back
+        // NOPx?
+        //
+        // load blue byte to ax
+        // AND ax, 0x8000_0000
+        // load from ax registers to GPIO high register
+        // branch equal to 0x8000_0000 (+Jump)
+        //    | NOPx?
+        //    | jump back
+        // NOPx?
+        // load from ax registers to GPIO low register
+        // branch equal to zero (+Jump)
+        //    | NOPx?
+        //    | jump back
+        // NOPx?
+        //
+        // load 0x8000_0000 from ax to shift register
+        // shift ax register which stores 0x8000_0000 one to right
+        // write back to ax
+       );
+       led_iterator++;
     }
 
 }
 
-void WS2812B_Controller::init_strip(std::array<RGB,WS2812B_LENGTH> temp) {
+void WS2812B_Controller::init_strip(int length) {
     LED_strip = temp;
 }
 
-/**
- * class WS2812B_Controller {
-    public:
-        WS2812B_CONTROLLER();
-        ~WS2812B_CONTROLLER();
-        void start_light();
-#define WS2812B_LENGTH 60
-        void init_strip(std::array<RGB,WS2812B_LENGTH> temp);
+void WS2812B_Controller::set_strip_LED(RGB light) {}
 
-    private:
-        static struct Signal_Nibbles {
-            unsigned int big_endian : 4;
-            unsigned int little_endian : 4;
-        };   
-        struct RGB {
-            uint8_t r;
-            uint8_t g;
-            uint8_t b;
-        };
-        std::array<RGB,WS2812B_LENGTH> LED_strip;
-}
-*/
+void WS2812B_Controller::shamble_LED_bits() {}
+
+void WS2812B_Controller::set_strip(RGB light) {}
+
+void WS2812B_Controller::set_strip_diff(std::array<WS2812B_Controller::RGB,WS2812B_LENGTH> strip) {}
