@@ -1,6 +1,6 @@
 #include"WS2812B_Controller.h"
 
-WS2812B_Controller::WS2812B_Controller(uint8_t pinnumber) {
+WS2812B_Controller::WS2812B_Controller(uint8_t pinnumber) : curr_led(NULL) {
     WS2812B_Controller::set_pin(pinnumber);
 }
 
@@ -151,14 +151,14 @@ void WS2812B_Controller::start_light() {
 
 }
 
-void WS2812B_Controller::init_strip(int length) {
-    LED_strip = temp;
+void WS2812B_Controller::init_strip_length(uint8_t length) {
+    free(WS2812B_Controller::curr_led);
+
+    WS2812B_Controller::curr_led = malloc(length * 3);
+    WS2812B_Controller::length = length;
 }
 
-void WS2812B_Controller::set_strip_LED(RGB light) {}
+void WS2812B_Controller::change_led_color_all(uint8_t r, uint8_t g, uint8_t b) {
+}
 
-void WS2812B_Controller::shamble_LED_bits() {}
-
-void WS2812B_Controller::set_strip(RGB light) {}
-
-void WS2812B_Controller::set_strip_diff(std::array<WS2812B_Controller::RGB,WS2812B_LENGTH> strip) {}
+void WS2812B_Controller::change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8_t b) {}

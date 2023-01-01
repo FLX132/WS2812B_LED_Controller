@@ -7,7 +7,7 @@
 #include<map>
 #include <Arduino.h>
 
-struct RGB {
+struct RGB { // use uint8_t *p = malloc something instead of struct
     uint8_t r;
     uint8_t g;
     uint8_t b;
@@ -21,11 +21,9 @@ class WS2812B_Controller {
         void start_light();
         void set_pin(uint8_t pinnumber);
 #define WS2812B_LENGTH 60
-        void init_strip(int length);
-        void set_strip_LED(RGB light);
-        void shamble_LED_bits();
-        void set_strip(RGB light);
-        void set_strip_diff(std::array<WS2812B_Controller::RGB,WS2812B_LENGTH> strip);
+        void init_strip_length(uint8_t length);
+        void change_led_color_all(uint8_t r, uint8_t g, uint8_t b);
+        void change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8_t b);
 
 
     private:
@@ -36,7 +34,9 @@ class WS2812B_Controller {
         std::array<WS2812B_Controller::RGB,WS2812B_LENGTH> LED_strip;
         uint8_t curr_pin_out;
         uint32_t curr_GPIO;
+        uint8_t length;
         bool first_GPIO_registers;
+        uint8_t *curr_led;
         std::map<uint8_t, uint32_t> pin_to_GPIO_index {
             {7, 0x00000080}, //GPIO32
             {8, 0x00000040}, //GPIO33
