@@ -154,7 +154,7 @@ void WS2812B_Controller::start_light() {
 void WS2812B_Controller::init_strip_length(uint8_t length) {
     free(WS2812B_Controller::curr_led);
 
-    WS2812B_Controller::curr_led = malloc(length * 3);
+    WS2812B_Controller::curr_led = (uint8_t*)malloc(length * 3);
     WS2812B_Controller::length = length;
 }
 
