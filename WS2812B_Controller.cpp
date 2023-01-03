@@ -5,13 +5,14 @@ WS2812B_Controller::WS2812B_Controller(uint8_t pinnumber) : curr_led(NULL) {
 }
 
 WS2812B_Controller::~WS2812B_Controller() {
-    
+    free(WS2812B_Controller::curr_led);
 }
 
 void WS2812B_Controller::set_pin(uint8_t pinnumber) {   
     if(WS2812B_Controller::pin_to_GPIO_index.find(pinnumber) != WS2812B_Controller::pin_to_GPIO_index.end()) { // Pin needs to be available for I/O operations to LED
         pinMode(WS2812B_Controller::curr_pin_out, INPUT); // INPUT is equivalent to 0x01 | 0000 0001b
         pinMode(pinnumber, OUTPUT); // OUTPUT is equivalent to 0x03 | 0000 0011b
+        digitalWrite(pinnumber, LOW); // LOW is equivalent to 0x0 | 0000 0000b and HIGH to 0x1 | 0001 0000b
         WS2812B_Controller::curr_pin_out = pinnumber;
         WS2812B_Controller::curr_GPIO = WS2812B_Controller::pin_to_GPIO_index.find(pinnumber)->second;
         (WS2812B_Controller::curr_pin_out > 0x1F) ? WS2812B_Controller::first_GPIO_registers == false : WS2812B_Controller::first_GPIO_registers == true;
@@ -99,58 +100,17 @@ void WS2812B_Controller::start_light() {
         * loop starts again with led_iterator++
         */
        asm volatile (
-        // loop 8 times
         //
-        // load from iterator address to ax
-        //
-        // load green byte to ax
-        // AND ax, 0x8000_0000
-        // load from ax registers to GPIO high register
-        // branch equal to 0x8000_0000 (+Jump)
-        //    | NOPx?
-        //    | jump back
-        // NOPx?
-        // load from ax registers to GPIO low register
-        // branch equal to zero (+Jump)
-        //    | NOPx?
-        //    | jump back
-        // NOPx?
-        //
-        // load red byte to ax
-        // AND ax, 0x8000_0000
-        // load from ax registers to GPIO high register
-        // branch equal to 0x8000_0000 (+Jump)
-        //    | NOPx?
-        //    | jump back
-        // NOPx?
-        // load from ax registers to GPIO low register
-        // branch equal to zero (+Jump)
-        //    | NOPx?
-        //    | jump back
-        // NOPx?
-        //
-        // load blue byte to ax
-        // AND ax, 0x8000_0000
-        // load from ax registers to GPIO high register
-        // branch equal to 0x8000_0000 (+Jump)
-        //    | NOPx?
-        //    | jump back
-        // NOPx?
-        // load from ax registers to GPIO low register
-        // branch equal to zero (+Jump)
-        //    | NOPx?
-        //    | jump back
-        // NOPx?
-        //
-        // load 0x8000_0000 from ax to shift register
-        // shift ax register which stores 0x8000_0000 one to right
-        // write back to ax
        );
        led_iterator++;
     }
 
 }
 
+/*!
+  @brief   Change length of the led strip
+  @param   length  New length of the strip
+*/
 void WS2812B_Controller::init_strip_length(uint8_t length) {
     free(WS2812B_Controller::curr_led);
 
@@ -158,7 +118,39 @@ void WS2812B_Controller::init_strip_length(uint8_t length) {
     WS2812B_Controller::length = length;
 }
 
-void WS2812B_Controller::change_led_color_all(uint8_t r, uint8_t g, uint8_t b) {
+/*!
+  @brief   Change led color of all lights on the strip.
+  @param   r  Red color value for RGB usecase
+  @param   g  Green color value for RGB usecase
+  @param   b  Blue color value for RGB usecase
+  @param   n  Used as entry point when needed
+  @note    For changing only one single light refer to change_led_color.
+           n is only used after initializing more lights on led strip to
+           set them to standard light output. Otherwise the changing of a
+           whole strip is started at 0.
+*/
+void WS2812B_Controller::change_led_color_all(uint8_t r, uint8_t g, uint8_t b, uint8_t n = 0) {
+    for(; n < WS2812B_Controller::length; n++) {
+        WS2812B_Controller::change_led_color(i, r, b, g);
+    }
 }
 
-void WS2812B_Controller::change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8_t b) {}
+/*!
+  @brief   Change led color of one particular position on the strip.
+  @param   n  position of light to be changed on the led strip. Needs to be
+              formatted from 0 - length-1.
+  @param   r  Red color value for RGB usecase
+  @param   g  Green color value for RGB usecase
+  @param   b  Blue color value for RGB usecase
+  @note    For using only one single color refer to change_led_color_all
+*/
+void WS2812B_Controller::change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8_t b) {
+    if(n < WS2812B_Controller::length) {
+        uint8_t *position_temp;
+        position_temp = &WS2812B_Controller::curr_led[n*3];
+
+        position_temp[R_OFFSET] = r;
+        position_temp[G_OFFSET] = g;
+        position_temp[B_OFFSET] = b;
+    }
+}
