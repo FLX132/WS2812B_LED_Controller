@@ -27,7 +27,7 @@ void WS2812B_Controller::set_pin(uint8_t pinnumber) {
 
 void WS2812B_Controller::start_light() {
 
-    auto led_iterator = LED_strip.begin(); // start by first LED and iterate through the array
+    // start by first LED and iterate through the array
 
     /**
      * Init first Signal:
@@ -89,21 +89,12 @@ void WS2812B_Controller::start_light() {
     asm(
         // load pin_hex to ax register(s)
         // load 0x8000_0000 to ax register(s)
-    );
-    while(led_iterator != LED_strip.end()) {
-        //execution with port etc.
-        /*
-        * 8 times read bit, save, shift left by 1
-        * send bit with time code to correct pin on esp32
-        * during wait (from 20 to 56 NOP) catch next bit and change big and little endian
-        * same procedure with red and blue
-        * loop starts again with led_iterator++
-        */
-       asm volatile (
+        // load length of strip * 3 in ax register
+        // load 0 to ax register
+
+        // loop if last ax < lenggth *
         //
-       );
-       led_iterator++;
-    }
+    );
 
 }
 

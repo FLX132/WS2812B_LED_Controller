@@ -33,7 +33,6 @@ class WS2812B_Controller {
             static unsigned int big_endian : 4;
             static unsigned int little_endian : 4;
         };   
-        std::array<WS2812B_Controller::RGB,WS2812B_LENGTH> LED_strip;
         uint8_t curr_pin_out;
         uint32_t curr_GPIO;
         uint8_t length;
