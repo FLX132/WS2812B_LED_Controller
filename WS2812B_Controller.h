@@ -17,9 +17,9 @@
 
 class WS2812B_Controller {
     public:
-        WS2812B_CONTROLLER(uint8_t pinnumber);
+        WS2812B_Controller(uint8_t pinnumber);
         // More accurate Version of constructor needed for the future
-        ~WS2812B_CONTROLLER();
+        ~WS2812B_Controller();
         void start_light();
         void set_pin(uint8_t pinnumber);
 #define WS2812B_LENGTH 60
@@ -29,10 +29,6 @@ class WS2812B_Controller {
 
 
     private:
-        static struct Signal_Nibbles {
-            static unsigned int big_endian : 4;
-            static unsigned int little_endian : 4;
-        };   
         uint8_t curr_pin_out;
         uint32_t curr_GPIO;
         uint8_t length;
@@ -57,5 +53,5 @@ class WS2812B_Controller {
             {33, 0x00000200}, //GPIO22
             {34, 0x00000100}, //GPIO23
         };
-}
+};
 #endif

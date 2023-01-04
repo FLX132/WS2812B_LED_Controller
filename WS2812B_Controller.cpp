@@ -27,19 +27,6 @@ void WS2812B_Controller::set_pin(uint8_t pinnumber) {
 
 void WS2812B_Controller::start_light() {
 
-    // start by first LED and iterate through the array
-
-    /**
-     * Init first Signal:
-     *   T0H -> 0x14 -> T0L -> 0x38
-     *   T1H -> 0x34 -> T1L -> 0x18
-    */
-    Signal_Nibbles::big_endian = 0x1;
-    Signal_Nibbles::little_endian = 0x4;
-    if(led_iterator->g & 0x80) {
-        Signal_Nibbles::big_endian+=0x2;
-    }
-
     /**
      * Preprocessor uses state-machine like transition:
      *   - T0H -> T0L
@@ -81,20 +68,32 @@ void WS2812B_Controller::start_light() {
          *     0x88108081 (1000 1000 0001 0001 1000 0000 1000 0001) -> 0x8810C081 (1000 1000 0001 0000 1000 0000 1000 0001)
          *     [GPIO-PIN set: 0, 4, 12, 15, 16, 24, 31]                    [GPIO-PIN set: 0, 4, 12, 16, 24, 31]
         */
+#define T0H_NOP 
 
     uint32_t output_reg_addr_set = ((6 < WS2812B_Controller::curr_pin_out < 9) ? GPIO_OUT1_W1TS_REG : GPIO_OUT_W1TS_REG);
     uint32_t output_reg_addr_clear = ((6 < WS2812B_Controller::curr_pin_out < 9) ? GPIO_OUT1_W1TC_REG : GPIO_OUT_W1TC_REG);
-    uint32_t pin_hex = WS2812B_Controller::pin_to_GPIO_index.find(WS2812B_Controller::curr_pin_out);
+    uint32_t pin_hex = WS2812B_Controller::pin_to_GPIO_index.find(WS2812B_Controller::curr_pin_out)->second;
 
-    asm(
-        // load pin_hex to ax register(s)
-        // load 0x8000_0000 to ax register(s)
-        // load length of strip * 3 in ax register
-        // load 0 to ax register
-
-        // loop if last ax < lenggth *
-        //
+    // This Assembly section is used to load prerequierements to registers in the processor for faster access
+    asm(""
+        // load 0 as malloc_index to ax
+        // load current_led[0] to ax
+        // load length*8 to ax
+        // load 0x80 as curr_bit to ax
     );
+
+    // This Assembly section is used for actually setting up lights
+    while(true) {
+        asm(""
+            // curr_bit = 0x80
+            // ax = current_led[0] & curr_bit
+            // ax = curr_bit >> 1
+            // 
+            //
+            // 
+            // 
+        );
+    }
 
 }
 
@@ -120,9 +119,9 @@ void WS2812B_Controller::init_strip_length(uint8_t length) {
            set them to standard light output. Otherwise the changing of a
            whole strip is started at 0.
 */
-void WS2812B_Controller::change_led_color_all(uint8_t r, uint8_t g, uint8_t b, uint8_t n = 0) {
+void WS2812B_Controller::change_led_color_all(uint8_t r, uint8_t g, uint8_t b, uint8_t n) {
     for(; n < WS2812B_Controller::length; n++) {
-        WS2812B_Controller::change_led_color(i, r, b, g);
+        WS2812B_Controller::change_led_color(n, r, b, g);
     }
 }
 
