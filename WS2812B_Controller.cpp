@@ -75,25 +75,28 @@ void WS2812B_Controller::start_light() {
     uint32_t pin_hex = WS2812B_Controller::pin_to_GPIO_index.find(WS2812B_Controller::curr_pin_out)->second;
 
     // This Assembly section is used to load prerequierements to registers in the processor for faster access
-    asm(""
-        // load 0 as malloc_index to ax
-        // load current_led[0] to ax
-        // load length*8 to ax
-        // load 0x80 as curr_bit to ax
+    asm(
+        "movi a3, 128" // load comparing parameters into registers for later catching off bits in current_led rgb bytes
+        "movi a4, 64"
+        "movi a5, 32"
+        "movi a6, 16"
+        "movi a7, 8"
+        "movi a8, 4"
+        "movi a9, 2"
+        "movi a10, 1"
     );
+    int temp_length = WS2812B_Controller::length*3;
 
     // This Assembly section is used for actually setting up lights
-    while(true) {
-        asm(""
-            // curr_bit = 0x80
-            // ax = current_led[0] & curr_bit
-            // ax = curr_bit >> 1
-            // 
-            //
-            // 
-            // 
+    for(int i = 0; i < temp_length; i++) {
+        asm(
+            "l8ui a11, %0, 0" // %0 = curr_led
+            "and a12, a11, a3" // compare current_led first bit to 0x80 => 1 or 0
+            "" // a12 equals zero than wait this time or this time
         );
+        WS2812B_Controller::curr_led++;
     }
+    WS2812B_Controller::curr_led = WS2812B_Controller::curr_led - temp_length; // setting curr_led back to index 0
 
 }
 
