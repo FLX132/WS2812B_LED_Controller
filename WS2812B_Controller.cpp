@@ -76,6 +76,7 @@ void WS2812B_Controller::start_light() {
 
     // This Assembly section is used to load prerequierements to registers in the processor for faster access
     asm(
+        "head:"
         "movi a3, 128" // load comparing parameters into registers for later catching off bits in current_led rgb bytes
         "movi a4, 64"
         "movi a5, 32"
@@ -90,9 +91,12 @@ void WS2812B_Controller::start_light() {
     // This Assembly section is used for actually setting up lights
     for(int i = 0; i < temp_length; i++) {
         asm(
+            "start-led:"
             "l8ui a11, %0, 0" // %0 = curr_led
             "and a12, a11, a3" // compare current_led first bit to 0x80 => 1 or 0
-            "" // a12 equals zero than wait this time or this time
+            "beqz a12, zero-time" // a12 equals zero than wait this time or this time
+            ""
+            "zero-time:" //branch for 0 encoding
         );
         WS2812B_Controller::curr_led++;
     }
