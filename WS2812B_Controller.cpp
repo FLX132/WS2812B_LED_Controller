@@ -76,27 +76,172 @@ void WS2812B_Controller::start_light() {
 
     // This Assembly section is used to load prerequierements to registers in the processor for faster access
     asm(
-        "head:"
-        "movi a3, 128" // load comparing parameters into registers for later catching off bits in current_led rgb bytes
-        "movi a4, 64"
-        "movi a5, 32"
-        "movi a6, 16"
-        "movi a7, 8"
-        "movi a8, 4"
-        "movi a9, 2"
-        "movi a10, 1"
+        "movi a3, 128;" // load comparing parameters into registers for later catching off bits in current_led rgb bytes
+        "movi a4, 64;"
+        "movi a5, 32;"
+        "movi a6, 16;"
+        "movi a7, 8;"
+        "movi a8, 4;"
+        "movi a9, 2;"
+        "movi a10, 1;"
     );
     int temp_length = WS2812B_Controller::length*3;
 
     // This Assembly section is used for actually setting up lights
     for(int i = 0; i < temp_length; i++) {
         asm(
-            "start-led:"
-            "l8ui a11, %0, 0" // %0 = curr_led
-            "and a12, a11, a3" // compare current_led first bit to 0x80 => 1 or 0
-            "beqz a12, zero-time" // a12 equals zero than wait this time or this time
-            ""
+            "read-bit:"
+            "l8ui a11, %0, 0;" // %0 = curr_led
+            "and a12, a11, a3;" // compare current_led first bit to 0x80 => 1 or 0
+            "bnez a12, one-time;" // a12 equals zero than wait this time or this time
             "zero-time:" //branch for 0 encoding
+            "s32i %3, %1;" // send to register output
+            "nop;" // nop: 1; Nop x20
+            "nop;" // nop: 2
+            "nop;" // nop: 3
+            "nop;" // nop: 4
+            "nop;" // nop: 5
+            "nop;" // nop: 6
+            "nop;" // nop: 7
+            "nop;" // nop: 8
+            "nop;" // nop: 9
+            "nop;" // nop: 10
+            "nop;" // nop: 11
+            "nop;" // nop: 12
+            "nop;" // nop: 13
+            "nop;" // nop: 14
+            "nop;" // nop: 15
+            "nop;" // nop: 16
+            "nop;" // nop: 17
+            "nop;" // nop: 18
+            "nop;" // nop: 19
+            "nop;" // nop: 20
+            "s32i %2, %3;" //send to register output negate
+            "nop;" // nop: 1; Nop x56 - 8
+            "nop;" // nop: 2
+            "nop;" // nop: 3
+            "nop;" // nop: 4
+            "nop;" // nop: 5
+            "nop;" // nop: 6
+            "nop;" // nop: 7
+            "nop;" // nop: 8
+            "nop;" // nop: 9
+            "nop;" // nop: 10
+            "nop;" // nop: 11
+            "nop;" // nop: 12
+            "nop;" // nop: 13
+            "nop;" // nop: 14
+            "nop;" // nop: 15
+            "nop;" // nop: 16
+            "nop;" // nop: 17
+            "nop;" // nop: 18
+            "nop;" // nop: 19
+            "nop;" // nop: 20
+            "nop;" // nop: 21
+            "nop;" // nop: 22
+            "nop;" // nop: 23
+            "nop;" // nop: 24
+            "nop;" // nop: 25
+            "nop;" // nop: 26
+            "nop;" // nop: 27
+            "nop;" // nop: 28
+            "nop;" // nop: 29
+            "nop;" // nop: 30
+            "nop;" // nop: 31
+            "nop;" // nop: 32
+            "nop;" // nop: 33
+            "nop;" // nop: 34
+            "nop;" // nop: 35
+            "nop;" // nop: 36
+            "nop;" // nop: 37
+            "nop;" // nop: 38
+            "nop;" // nop: 39
+            "nop;" // nop: 40
+            "nop;" // nop: 41
+            "nop;" // nop: 42
+            "nop;" // nop: 43
+            "nop;" // nop: 44
+            "nop;" // nop: 45
+            "nop;" // nop: 46
+            "nop;" // nop: 47
+            "nop;" // nop: 48
+            "srli a3, a3, 1;" // shift a3 >> 1
+            "j end:" // Jump to end:
+            "one-time:" //branch for 0 encoding
+            "s32i %3, %1;" // send to register output"
+            "nop;" // nop: 1; Nop x52
+            "nop;" // nop: 2
+            "nop;" // nop: 3
+            "nop;" // nop: 4
+            "nop;" // nop: 5
+            "nop;" // nop: 6
+            "nop;" // nop: 7
+            "nop;" // nop: 8
+            "nop;" // nop: 9
+            "nop;" // nop: 10
+            "nop;" // nop: 11
+            "nop;" // nop: 12
+            "nop;" // nop: 13
+            "nop;" // nop: 14
+            "nop;" // nop: 15
+            "nop;" // nop: 16
+            "nop;" // nop: 17
+            "nop;" // nop: 18
+            "nop;" // nop: 19
+            "nop;" // nop: 20
+            "nop;" // nop: 21
+            "nop;" // nop: 22
+            "nop;" // nop: 23
+            "nop;" // nop: 24
+            "nop;" // nop: 25
+            "nop;" // nop: 26
+            "nop;" // nop: 27
+            "nop;" // nop: 28
+            "nop;" // nop: 29
+            "nop;" // nop: 30
+            "nop;" // nop: 31
+            "nop;" // nop: 32
+            "nop;" // nop: 33
+            "nop;" // nop: 34
+            "nop;" // nop: 35
+            "nop;" // nop: 36
+            "nop;" // nop: 37
+            "nop;" // nop: 38
+            "nop;" // nop: 39
+            "nop;" // nop: 40
+            "nop;" // nop: 41
+            "nop;" // nop: 42
+            "nop;" // nop: 43
+            "nop;" // nop: 44
+            "nop;" // nop: 45
+            "nop;" // nop: 46
+            "nop;" // nop: 47
+            "nop;" // nop: 48
+            "nop;" // nop: 49
+            "nop;" // nop: 50
+            "nop;" // nop: 51
+            "nop;" // nop: 52
+            "s32i %2, %3;" //send to register output negate
+            "nop;" // nop: 1; Nop x24 - 7
+            "nop;" // nop: 2
+            "nop;" // nop: 3
+            "nop;" // nop: 4
+            "nop;" // nop: 5
+            "nop;" // nop: 6
+            "nop;" // nop: 7
+            "nop;" // nop: 8
+            "nop;" // nop: 9
+            "nop;" // nop: 10
+            "nop;" // nop: 11
+            "nop;" // nop: 12
+            "nop;" // nop: 13
+            "nop;" // nop: 14
+            "nop;" // nop: 15
+            "nop;" // nop: 16
+            "nop;" // nop: 17
+            "srli a3, a3, 1;" // shift a3 >> 1
+            "end:"
+            : "+r" (WS2812B_Controller::curr_led[0]), "+r" (output_reg_addr_set), "r+" (output_reg_addr_clear), "r+" (pin_hex)
         );
         WS2812B_Controller::curr_led++;
     }
