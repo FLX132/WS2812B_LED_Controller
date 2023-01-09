@@ -77,25 +77,20 @@ void WS2812B_Controller::start_light() {
     // This Assembly section is used to load prerequierements to registers in the processor for faster access
     asm(
         "movi a3, 128;" // load comparing parameters into registers for later catching off bits in current_led rgb bytes
-        "movi a4, 64;"
-        "movi a5, 32;"
-        "movi a6, 16;"
-        "movi a7, 8;"
-        "movi a8, 4;"
-        "movi a9, 2;"
-        "movi a10, 1;"
     );
     int temp_length = WS2812B_Controller::length*3;
 
     // This Assembly section is used for actually setting up lights
     for(int i = 0; i < temp_length; i++) {
         asm(
-            "read-bit:"
             "l8ui a11, %0, 0;" // %0 = curr_led
+            "R:"
+            "beqz a3, E;"
+            
             "and a12, a11, a3;" // compare current_led first bit to 0x80 => 1 or 0
-            "bnez a12, one-time;" // a12 equals zero than wait this time or this time
-            "zero-time:" //branch for 0 encoding
-            "s32i %3, %1;" // send to register output
+            "bnez a12, O;" // a12 equals zero than wait this time or this time
+            //branch for 0 encoding
+            "s32i %3, %1, 0;" // send to register output
             "nop;" // nop: 1; Nop x20
             "nop;" // nop: 2
             "nop;" // nop: 3
@@ -116,8 +111,8 @@ void WS2812B_Controller::start_light() {
             "nop;" // nop: 18
             "nop;" // nop: 19
             "nop;" // nop: 20
-            "s32i %2, %3;" //send to register output negate
-            "nop;" // nop: 1; Nop x56 - 8
+            "s32i %2, %3, 0;" //send to register output negate
+            "nop;" // nop: 1; Nop x56 - 9
             "nop;" // nop: 2
             "nop;" // nop: 3
             "nop;" // nop: 4
@@ -164,11 +159,10 @@ void WS2812B_Controller::start_light() {
             "nop;" // nop: 45
             "nop;" // nop: 46
             "nop;" // nop: 47
-            "nop;" // nop: 48
             "srli a3, a3, 1;" // shift a3 >> 1
-            "j end:" // Jump to end:
-            "one-time:" //branch for 0 encoding
-            "s32i %3, %1;" // send to register output"
+            "j R;" // Jump to end:
+            "O:" //branch for 1 encoding
+            "s32i %3, %1, 0;" // send to register output"
             "nop;" // nop: 1; Nop x52
             "nop;" // nop: 2
             "nop;" // nop: 3
@@ -221,8 +215,8 @@ void WS2812B_Controller::start_light() {
             "nop;" // nop: 50
             "nop;" // nop: 51
             "nop;" // nop: 52
-            "s32i %2, %3;" //send to register output negate
-            "nop;" // nop: 1; Nop x24 - 7
+            "s32i %2, %3, 0;" //send to register output negate
+            "nop;" // nop: 1; Nop x24 - 8
             "nop;" // nop: 2
             "nop;" // nop: 3
             "nop;" // nop: 4
@@ -238,9 +232,10 @@ void WS2812B_Controller::start_light() {
             "nop;" // nop: 14
             "nop;" // nop: 15
             "nop;" // nop: 16
-            "nop;" // nop: 17
             "srli a3, a3, 1;" // shift a3 >> 1
-            "end:"
+            "j R;"
+            "E:"
+            "movi a3, 128;"
             : "+r" (WS2812B_Controller::curr_led[0]), "+r" (output_reg_addr_set), "r+" (output_reg_addr_clear), "r+" (pin_hex)
         );
         WS2812B_Controller::curr_led++;
