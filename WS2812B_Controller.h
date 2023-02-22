@@ -6,6 +6,7 @@
 #include<array>
 #include<map>
 #include <Arduino.h>
+#include <driver/rmt.h>
 
 /**
  * WS2812B uses GRB instead of RGB
@@ -14,6 +15,11 @@
 #define R_OFFSET 1
 #define G_OFFSET 0
 #define B_OFFSET 2
+
+static uint32_t t0h_ticks = 0;
+static uint32_t t1h_ticks = 0;
+static uint32_t t0l_ticks = 0;
+static uint32_t t1l_ticks = 0;
 
 class WS2812B_Controller {
     public:
@@ -26,32 +32,37 @@ class WS2812B_Controller {
         void init_strip_length(uint8_t length);
         void change_led_color_all(uint8_t r, uint8_t g, uint8_t b, uint8_t n = 0);
         void change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8_t b);
+        void test_light();
+        void output() {
+          Serial.println((int)length);
+        }
 
 
     private:
+        bool reserved_channels[RMT_CHANNEL_MAX];
         uint8_t curr_pin_out;
         uint32_t curr_GPIO;
         uint8_t length;
         bool first_GPIO_registers;
         uint8_t *curr_led;
-        std::map<uint8_t, uint32_t> pin_to_GPIO_index {
-            {32, 0x00000080}, //GPIO32
-            {33, 0x00000040}, //GPIO33
-            {25, 0x00000040}, //GPIO25
-            {26, 0x00000020}, //GPIO26
-            {27, 0x00000010}, //GPIO27
-            {14, 0x00020000}, //GPIO14
-            {12, 0x00080000}, //GPIO12
-            {13, 0x00040000}, //GPIO13
-            {15, 0x00010000}, //GPIO15
-            {2, 0x20000000}, //GPIO2
-            {4, 0x08000000}, //GPIO4
-            {5, 0x04000000}, //GPIO5
-            {18, 0x00002000}, //GPIO18
-            {19, 0x00001000}, //GPIO19
-            {21, 0x00000400}, //GPIO21
-            {22, 0x00000200}, //GPIO22
-            {23, 0x00000100}, //GPIO23
+        std::map<uint8_t, gpio_num_t> pin_to_GPIO_index {
+            {32, gpio_num_t::GPIO_NUM_32}, //GPIO32
+            {33, gpio_num_t::GPIO_NUM_33}, //GPIO33
+            {25, gpio_num_t::GPIO_NUM_25}, //GPIO25
+            {26, gpio_num_t::GPIO_NUM_26}, //GPIO26
+            {27, gpio_num_t::GPIO_NUM_27}, //GPIO27
+            {14, gpio_num_t::GPIO_NUM_14}, //GPIO14
+            {12, gpio_num_t::GPIO_NUM_12}, //GPIO12
+            {13, gpio_num_t::GPIO_NUM_13}, //GPIO13
+            {15, gpio_num_t::GPIO_NUM_15}, //GPIO15
+            {2, gpio_num_t::GPIO_NUM_2}, //GPIO2
+            {4, gpio_num_t::GPIO_NUM_4}, //GPIO4
+            {5, gpio_num_t::GPIO_NUM_5}, //GPIO5
+            {18, gpio_num_t::GPIO_NUM_18}, //GPIO18
+            {19, gpio_num_t::GPIO_NUM_19}, //GPIO19
+            {21, gpio_num_t::GPIO_NUM_21}, //GPIO21
+            {22, gpio_num_t::GPIO_NUM_22}, //GPIO22
+            {23, gpio_num_t::GPIO_NUM_23}, //GPIO23
         };
 };
 #endif
