@@ -64,5 +64,34 @@ class WS2812B_Controller {
             {22, gpio_num_t::GPIO_NUM_22}, //GPIO22
             {23, gpio_num_t::GPIO_NUM_23}, //GPIO23
         };
+        static void ws2812b_rmt(const void *src, rmt_item32_t *dest, size_t src_size, size_t wanted_num, size_t *translated_size, size_t *item_num) {
+
+          if(src == NULL || dest == NULL) {
+            *translated_size = 0;
+            *item_num = 0;
+          }
+          const rmt_item32_t bit0 = {{{ t0h_ticks, 1, t0l_ticks, 0 }}};
+          const rmt_item32_t bit1 = {{{ t1h_ticks, 1, t1l_ticks, 0 }}};
+          uint8_t* src_pointer = (uint8_t *)src;
+          size_t size = 0;
+          size_t num = 0;
+          rmt_item32_t *pdest = dest;
+
+          while(num < wanted_num && size < src_size) {
+            for(int i = 0; i < 8; i++) {
+              if(*src_pointer & (1 << (7-i))) {
+                pdest->val = bit1.val;                
+              } else {
+                pdest->val = bit0.val;
+              }
+              pdest++;
+              num++;
+            }
+            src_pointer++;
+            size++;
+          }
+          *translated_size = size;
+          *item_num = num;
+        };
 };
 #endif
