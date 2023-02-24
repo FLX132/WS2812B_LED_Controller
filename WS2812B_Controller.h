@@ -5,6 +5,7 @@
 #include<iterator>
 #include<array>
 #include<map>
+#include<cstdlib>
 #include <Arduino.h>
 #include <driver/rmt.h>
 
@@ -16,36 +17,14 @@
 #define G_OFFSET 0
 #define B_OFFSET 2
 
+#define WS2812B_LENGTH 60
+
 static uint32_t t0h_ticks = 0;
 static uint32_t t1h_ticks = 0;
 static uint32_t t0l_ticks = 0;
 static uint32_t t1l_ticks = 0;
 
-class WS2812B_Controller {
-    public:
-        WS2812B_Controller(uint8_t pinnumber);
-        // More accurate Version of constructor needed for the future
-        ~WS2812B_Controller();
-        void start_light();
-        void set_pin(uint8_t pinnumber);
-#define WS2812B_LENGTH 60
-        void init_strip_length(uint8_t length);
-        void change_led_color_all(uint8_t r, uint8_t g, uint8_t b, uint8_t n = 0);
-        void change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8_t b);
-        void test_light();
-        void output() {
-          Serial.println((int)length);
-        }
-
-
-    private:
-        bool reserved_channels[RMT_CHANNEL_MAX];
-        uint8_t curr_pin_out;
-        uint32_t curr_GPIO;
-        uint8_t length;
-        bool first_GPIO_registers;
-        uint8_t *curr_led;
-        std::map<uint8_t, gpio_num_t> pin_to_GPIO_index {
+static std::map<uint8_t, gpio_num_t> pin_to_GPIO_index {
             {32, gpio_num_t::GPIO_NUM_32}, //GPIO32
             {33, gpio_num_t::GPIO_NUM_33}, //GPIO33
             {25, gpio_num_t::GPIO_NUM_25}, //GPIO25
@@ -64,6 +43,30 @@ class WS2812B_Controller {
             {22, gpio_num_t::GPIO_NUM_22}, //GPIO22
             {23, gpio_num_t::GPIO_NUM_23}, //GPIO23
         };
+
+class WS2812B_Controller {
+    public:
+        WS2812B_Controller(uint8_t pinnumber);
+        // More accurate Version of constructor needed for the future
+        ~WS2812B_Controller();
+        void start_light();
+        void set_pin(uint8_t pinnumber);
+        void init_strip_length(uint8_t length);
+        void change_led_color_all(uint8_t r, uint8_t g, uint8_t b, uint8_t n = 0);
+        void change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8_t b);
+        void change_led_color_random(uint8_t n);
+        void change_led_color_random_all();
+        void change_led_color_queue();
+        void change_led_brightness_all(uint8_t b);
+        void change_led_brightness(uint8_t n, uint8_t b);
+
+    private:
+        bool reserved_channels[RMT_CHANNEL_MAX];
+        uint8_t curr_pin_out;
+        uint32_t curr_GPIO;
+        uint8_t length;
+        bool first_GPIO_registers;
+        uint8_t *curr_led;
         static void ws2812b_rmt(const void *src, rmt_item32_t *dest, size_t src_size, size_t wanted_num, size_t *translated_size, size_t *item_num) {
 
           if(src == NULL || dest == NULL) {

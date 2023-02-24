@@ -14,7 +14,7 @@ void WS2812B_Controller::set_pin(uint8_t pinnumber) {
         pinMode(pinnumber, OUTPUT); // OUTPUT is equivalent to 0x03 | 0000 0011b
         digitalWrite(pinnumber, LOW); // LOW is equivalent to 0x0 | 0000 0000b and HIGH to 0x1 | 0001 0000b
         WS2812B_Controller::curr_pin_out = pinnumber;
-        WS2812B_Controller::curr_GPIO = WS2812B_Controller::pin_to_GPIO_index.find(pinnumber)->second;
+        WS2812B_Controller::curr_GPIO = pin_to_GPIO_index.find(pinnumber)->second;
         (WS2812B_Controller::curr_pin_out > 0x1F) ? WS2812B_Controller::first_GPIO_registers == false : WS2812B_Controller::first_GPIO_registers == true;
 }
 
@@ -66,7 +66,7 @@ void WS2812B_Controller::start_light() {
   rmt_wait_tx_done(config.channel, pdMS_TO_TICKS(100));
   rmt_driver_uninstall(config.channel);
   reserved_channels[channel] = false;
-  gpio_set_direction(WS2812B_Controller::pin_to_GPIO_index.find(WS2812B_Controller::curr_pin_out)->second, GPIO_MODE_OUTPUT);
+  gpio_set_direction(pin_to_GPIO_index.find(WS2812B_Controller::curr_pin_out)->second, GPIO_MODE_OUTPUT);
 }
 
 /*!
@@ -116,3 +116,25 @@ void WS2812B_Controller::change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8
         position_temp[B_OFFSET] = b;
     }
 }
+
+void WS2812B_Controller::change_led_color_random(uint8_t n) {
+  if(n<WS2812B_Controller::length) {
+    srand( (unsigned)time(NULL) );
+    uint8_t r = (uint8_t)std::rand() % 255;
+    uint8_t g = (uint8_t)std::rand() % 255;
+    uint8_t b = (uint8_t)std::rand() % 255;
+
+    uint8_t *position_temp = &WS2812B_Controller::curr_led[n*3];
+    position_temp[R_OFFSET] = r;
+    position_temp[G_OFFSET] = g;
+    position_temp[B_OFFSET] = b;
+  }
+}
+void WS2812B_Controller::change_led_color_random_all() {
+  for(int n = 0; n < WS2812B_Controller::length; n++) {
+    WS2812B_Controller::change_led_color_random(n);
+  }
+}
+void WS2812B_Controller::change_led_color_queue() {}
+void WS2812B_Controller::change_led_brightness_all(uint8_t b) {}
+void WS2812B_Controller::change_led_brightness(uint8_t n, uint8_t b) {}
