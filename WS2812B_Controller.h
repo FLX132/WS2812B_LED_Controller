@@ -56,7 +56,7 @@ class WS2812B_Controller {
         void change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8_t b);
         void change_led_color_random(uint8_t n);
         void change_led_color_random_all();
-        void change_led_color_queue();
+        void change_led_color_queue(uint8_t r, uint8_t g, uint8_t b);
         void change_led_brightness_all(uint8_t b);
         void change_led_brightness(uint8_t n, uint8_t b);
 

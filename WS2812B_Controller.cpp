@@ -3,6 +3,7 @@
 WS2812B_Controller::WS2812B_Controller(uint8_t pinnumber) : curr_led(NULL) {
     WS2812B_Controller::set_pin(pinnumber);
     this->reserved_channels[RMT_CHANNEL_MAX];
+    srand( (unsigned)time(NULL) );
 }
 
 WS2812B_Controller::~WS2812B_Controller() {
@@ -119,7 +120,6 @@ void WS2812B_Controller::change_led_color(uint8_t n, uint8_t r, uint8_t g, uint8
 
 void WS2812B_Controller::change_led_color_random(uint8_t n) {
   if(n<WS2812B_Controller::length) {
-    srand( (unsigned)time(NULL) );
     uint8_t r = (uint8_t)std::rand() % 255;
     uint8_t g = (uint8_t)std::rand() % 255;
     uint8_t b = (uint8_t)std::rand() % 255;
@@ -135,6 +135,23 @@ void WS2812B_Controller::change_led_color_random_all() {
     WS2812B_Controller::change_led_color_random(n);
   }
 }
-void WS2812B_Controller::change_led_color_queue() {}
+void WS2812B_Controller::change_led_color_queue(uint8_t r, uint8_t g, uint8_t b) {
+  uint8_t *lastpos = &WS2812B_Controller::curr_led[(WS2812B_Controller::length-1)*3];
+  uint8_t *newpos =  &WS2812B_Controller::curr_led[(WS2812B_Controller::length-1)*3 - 3];
+
+  for(int i = (WS2812B_Controller::length-1)*3 - 3; i >= 0; i-=3) {
+    lastpos[R_OFFSET] = newpos[R_OFFSET];
+    lastpos[G_OFFSET] = newpos[G_OFFSET];
+    lastpos[B_OFFSET] = newpos[B_OFFSET]; 
+
+    lastpos = newpos;
+    newpos-=3;
+  }
+
+   lastpos[R_OFFSET] = r;
+   lastpos[G_OFFSET] = g;
+   lastpos[B_OFFSET] = b; 
+}
+
 void WS2812B_Controller::change_led_brightness_all(uint8_t b) {}
 void WS2812B_Controller::change_led_brightness(uint8_t n, uint8_t b) {}
